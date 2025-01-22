@@ -106,11 +106,6 @@ class RealEstateRecommender:
         # Get recommendations and format output
         recommendations = self.properties_df.iloc[recommended_indices].copy()
 
-        # Format decimal numbers in the output
-        recommendations['price'] = recommendations['price'].round(2)
-        recommendations['sqft'] = recommendations['sqft'].round(2)
-        recommendations['lot_size'] = recommendations['lot_size'].round(2)
-
         return recommendations
 
 
