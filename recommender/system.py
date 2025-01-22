@@ -23,6 +23,7 @@ class RealEstateRecommender:
         properties_data = pd.DataFrame(
             list(
                 queryset.values(
+                    'id',  # Include the unique 'id' field
                     'price',
                     'bedrooms',
                     'bathrooms',
@@ -54,6 +55,60 @@ class RealEstateRecommender:
         self.features_matrix = self.scaler.fit_transform(
             self.properties_df[feature_columns]
         )
+
+    def add_property(self, property_data):
+        """
+        Add a new property to the recommendation system.
+
+        Parameters:
+        property_data: dict with keys matching RealState fields
+        """
+        # Convert the property data to a DataFrame
+        new_property_df = pd.DataFrame([property_data])
+
+        # Append to properties DataFrame
+        self.properties_df = pd.concat(
+            [self.properties_df, new_property_df], ignore_index=True
+        )
+
+        # Normalize features of the new property
+        feature_columns = [
+            'price',
+            'bedrooms',
+            'bathrooms',
+            'sqft',
+            'year_built',
+            'parking_spaces',
+        ]
+        new_features = self.scaler.transform(new_property_df[feature_columns])
+
+        # Append normalized features to the features matrix
+        self.features_matrix = np.vstack([self.features_matrix, new_features])
+
+    def remove_property(self, property_id):
+        """
+        Remove a property from the recommendation system.
+
+        Parameters:
+        property_id: int, unique identifier of the property
+        """
+        # Find the index of the property to remove
+        index_to_remove = self.properties_df[
+            self.properties_df['id'] == property_id
+        ].index
+
+        if not index_to_remove.empty:
+            # Drop the property from properties DataFrame
+            self.properties_df = self.properties_df.drop(
+                index=index_to_remove
+            ).reset_index(drop=True)
+
+            # Remove the corresponding row from the features matrix
+            self.features_matrix = np.delete(
+                self.features_matrix, index_to_remove, axis=0
+            )
+        else:
+            raise ValueError(f"Property with ID {property_id} not found.")
 
     def get_recommendations(self, user_preferences, num_recommendations=5):
         """
