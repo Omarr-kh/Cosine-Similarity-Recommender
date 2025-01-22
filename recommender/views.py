@@ -12,10 +12,10 @@ def get_recommendations(request):
     try:
         user_preferences = {
             "budget": float(request.query_params.get("budget")),
-            "bedrooms": int(request.query_params.get("bedrooms")),
-            "bathrooms": int(request.query_params.get("bathrooms")),
-            "sqft": float(request.query_params.get("sqft")),
-            "year_built": int(request.query_params.get("year_built")),
+            "min_bedrooms": int(request.query_params.get("bedrooms")),
+            "min_bathrooms": int(request.query_params.get("bathrooms")),
+            "preferred_sqft": float(request.query_params.get("sqft")),
+            "min_year_built": int(request.query_params.get("year_built")),
             "parking_spaces": int(request.query_params.get("parking_spaces")),
         }
         num_recommendations = int(request.query_params.get("num_recommendations", 5))
