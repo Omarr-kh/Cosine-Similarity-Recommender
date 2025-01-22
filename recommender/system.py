@@ -17,17 +17,21 @@ class RealEstateRecommender:
         """
         Load and preprocess property data
         """
-        queryset  = RealState.objects.all()
+        queryset = RealState.objects.all()
 
         # Convert the queryset to a Pandas DataFrame
-        properties_data = pd.DataFrame(list(queryset.values(
-            'price',
-            'bedrooms',
-            'bathrooms',
-            'sqft',
-            'year_built',
-            'parking_spaces'
-        )))
+        properties_data = pd.DataFrame(
+            list(
+                queryset.values(
+                    'price',
+                    'bedrooms',
+                    'bathrooms',
+                    'sqft',
+                    'year_built',
+                    'parking_spaces',
+                )
+            )
+        )
 
         # Ensure the DataFrame is not empty
         if properties_data.empty:
