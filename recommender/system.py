@@ -20,19 +20,7 @@ class RealEstateRecommender:
         queryset = RealState.objects.all()
 
         # Convert the queryset to a Pandas DataFrame
-        properties_data = pd.DataFrame(
-            list(
-                queryset.values(
-                    'id',  # Include the unique 'id' field
-                    'price',
-                    'bedrooms',
-                    'bathrooms',
-                    'sqft',
-                    'year_built',
-                    'parking_spaces',
-                )
-            )
-        )
+        properties_data = pd.DataFrame(list(queryset.values()))
 
         # Ensure the DataFrame is not empty
         if properties_data.empty:
