@@ -2,10 +2,12 @@ from django.db import models
 
 
 class RealState(models.Model):
-    price = models.PositiveBigIntegerField(db_index=True)  # Frequently filtered/sorted
+    price = models.DecimalField(
+        max_digits=15, decimal_places=3, db_index=True
+    )  # Frequently filtered/sorted
     bedrooms = models.PositiveIntegerField(db_index=True)  # Useful for filtering
     bathrooms = models.PositiveIntegerField(db_index=True)  # Useful for filtering
-    sqft = models.DecimalField(max_digits=10, decimal_places=3)
+    sqft = models.DecimalField(max_digits=15, decimal_places=3)
     year_built = models.PositiveIntegerField(
         db_index=True
     )  # Frequently filtered/sorted
