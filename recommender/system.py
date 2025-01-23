@@ -156,4 +156,12 @@ class RealEstateRecommender:
         return recommendations
 
 
-real_state_recommender = RealEstateRecommender()
+real_state_recommender = None
+
+
+def get_real_state_recommender():
+    global real_state_recommender
+    if real_state_recommender is None:
+        # Initialize the recommender here (only when accessed)
+        real_state_recommender = RealEstateRecommender()
+    return real_state_recommender

@@ -2,7 +2,7 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 
-from .system import real_state_recommender
+from .system import get_real_state_recommender
 
 import traceback
 
@@ -10,6 +10,7 @@ import traceback
 @api_view(["GET"])
 def get_recommendations(request):
     try:
+        real_state_recommender = get_real_state_recommender()
         user_preferences = {
             "budget": float(request.query_params.get("budget")),
             "min_bedrooms": int(request.query_params.get("bedrooms")),

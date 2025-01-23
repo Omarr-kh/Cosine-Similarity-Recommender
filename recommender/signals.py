@@ -2,11 +2,12 @@ from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
 from real_state.models import RealState
 
-from .system import real_state_recommender
+from .system import get_real_state_recommender
 
 
 @receiver(post_save, sender=RealState)
 def handle_property_save(sender, instance, created, **kwargs):
+    real_state_recommender = get_real_state_recommender()
     # Create the property data from the instance
     property_data = {
         'id': instance.id,
@@ -30,5 +31,6 @@ def handle_property_save(sender, instance, created, **kwargs):
 
 @receiver(post_delete, sender=RealState)
 def handle_property_delete(sender, instance, **kwargs):
+    real_state_recommender = get_real_state_recommender()
     # Remove the property from the recommender
     real_state_recommender.remove_property(instance.id)
