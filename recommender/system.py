@@ -96,7 +96,7 @@ class RealEstateRecommender:
                 self.features_matrix, index_to_remove, axis=0
             )
         else:
-            raise ValueError(f"Property with ID {property_id} not found.")
+            pass
 
     def get_recommendations(self, user_preferences, num_recommendations=5):
         """
