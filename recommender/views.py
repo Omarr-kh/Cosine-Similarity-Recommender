@@ -1,8 +1,11 @@
-from rest_framework import status
+from rest_framework import status, permissions
 from rest_framework.response import Response
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
 
 from .system import get_real_state_recommender
+from .content_based_filtering import get_similar_properties
+
+from django.contrib.auth.models import User
 
 import traceback
 
@@ -21,12 +24,48 @@ def get_recommendations(request):
         }
         num_recommendations = int(request.query_params.get("num_recommendations", 5))
 
-        recommendations_df = real_state_recommender.get_recommendations(user_preferences, num_recommendations)
+        recommendations_df = real_state_recommender.get_recommendations(
+            user_preferences, num_recommendations
+        )
 
         # Convert DataFrame to a JSON-serializable format
         recommendations = recommendations_df.to_dict(orient="records")
 
         return Response(recommendations, status=status.HTTP_200_OK)
+    except:
+        print(traceback.format_exc())
+        return Response(status=status.HTTP_409_CONFLICT)
+
+
+@permission_classes([permissions.IsAuthenticated])
+@api_view(["GET"])
+def recommend_properties(request):
+    try:
+        user = User.objects.get(id=2)
+        similar_properties = get_similar_properties(user, top_n=5)
+
+        # Serialize the recommended properties
+        recommendations = [
+            {
+                'id': prop.id,
+                'price': prop.price,
+                'bedrooms': prop.bedrooms,
+                'bathrooms': prop.bathrooms,
+                'sqft': prop.sqft,
+                'year_built': prop.year_built,
+                'property_type': prop.property_type,
+                'address': prop.address,
+                'city': prop.city,
+                'country': prop.country,
+                'parking_spaces': prop.parking_spaces,
+                'has_garage': prop.has_garage,
+                'has_pool': prop.has_pool,
+                'description': prop.description,
+            }
+            for prop in similar_properties
+        ]
+
+        return Response({'recommendations': recommendations}, status=status.HTTP_200_OK)
     except:
         print(traceback.format_exc())
         return Response(status=status.HTTP_409_CONFLICT)

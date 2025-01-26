@@ -32,5 +32,8 @@ def handle_property_save(sender, instance, created, **kwargs):
 @receiver(post_delete, sender=RealState)
 def handle_property_delete(sender, instance, **kwargs):
     real_state_recommender = get_real_state_recommender()
-    # Remove the property from the recommender
-    real_state_recommender.remove_property(instance.id)
+    try:
+        # Remove the property from the recommender
+        real_state_recommender.remove_property(instance.id)
+    except:
+        pass
