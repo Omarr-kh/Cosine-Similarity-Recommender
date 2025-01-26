@@ -54,10 +54,6 @@ def get_similar_properties(user, top_n=10):
     # Get properties the user has interacted with
     user_interactions = UserInteraction.objects.filter(user=user)
     user_properties = [interaction.property for interaction in user_interactions]
-    for prop in user_properties:
-        print(
-            f"Property ID: {prop.id}, Feature Vector: {property_to_feature_vector(prop)}"
-        )
 
     if not user_properties:
         return RealState.objects.none()  # Return empty queryset if no interactions
