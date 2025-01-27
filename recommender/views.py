@@ -3,7 +3,7 @@ from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
 
 from .system import get_real_state_recommender
-from .content_based_filtering import get_similar_properties
+from .content_based_filtering import get_content_filtering_recommender
 from .collaborative_filtering import user_based_collaborative_filtering
 
 from django.contrib.auth.models import User
@@ -42,8 +42,9 @@ def get_recommendations(request):
 @api_view(["GET"])
 def recommend_properties(request):
     try:
+        recommender = get_content_filtering_recommender()
         user = User.objects.get(id=2)
-        similar_properties = get_similar_properties(user, top_n=5)
+        similar_properties = recommender.get_similar_properties(user, top_n=5)
 
         # Serialize the recommended properties
         recommendations = [
