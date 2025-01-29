@@ -12,7 +12,7 @@ import traceback
 
 
 @api_view(["GET"])
-def get_recommendations(request):
+def cosine_similarity_recommendations(request):
     try:
         real_state_recommender = get_real_state_recommender()
         user_preferences = {
@@ -40,7 +40,7 @@ def get_recommendations(request):
 
 @permission_classes([permissions.IsAuthenticated])
 @api_view(["GET"])
-def recommend_properties(request):
+def content_based_recommendations(request):
     try:
         recommender = get_content_filtering_recommender()
         user = request.user
@@ -75,13 +75,48 @@ def recommend_properties(request):
 
 @permission_classes([permissions.IsAuthenticated])
 @api_view(["GET"])
-def recommend_properties_cf(request):
+def user_based_recommend_properties_cf(request):
     try:
         user = request.user
         recommender = get_collaborative_filtering_recommender()
         # Choose either user-based or item-based CF
         similar_properties = recommender.item_based_recommendations(user, top_n=5)
         # similar_properties = recommender.user_based_recommendations(user, top_n=5)
+
+        # Serialize the recommended properties
+        recommendations = [
+            {
+                'id': prop.id,
+                'price': prop.price,
+                'bedrooms': prop.bedrooms,
+                'bathrooms': prop.bathrooms,
+                'sqft': prop.sqft,
+                'year_built': prop.year_built,
+                'property_type': prop.property_type,
+                'address': prop.address,
+                'city': prop.city,
+                'country': prop.country,
+                'parking_spaces': prop.parking_spaces,
+                'has_garage': prop.has_garage,
+                'has_pool': prop.has_pool,
+                'description': prop.description,
+            }
+            for prop in similar_properties
+        ]
+
+        return Response({'recommendations': recommendations}, status=status.HTTP_200_OK)
+    except Exception as e:
+        print(f"Error: {e}")
+        return Response(status=status.HTTP_409_CONFLICT)
+
+
+@permission_classes([permissions.IsAuthenticated])
+@api_view(["GET"])
+def item_based_recommend_properties_cf(request):
+    try:
+        user = request.user
+        recommender = get_collaborative_filtering_recommender()
+        similar_properties = recommender.item_based_recommendations(user, top_n=5)
 
         # Serialize the recommended properties
         recommendations = [
