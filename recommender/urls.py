@@ -3,7 +3,24 @@ from django.urls import path
 from .views import *
 
 urlpatterns = [
-    path('recommendations/', get_recommendations, name='get-recommendations'),
-    path('recommendations2/', recommend_properties, name='recommend-properties'),
-    path('recommendations3/', recommend_properties_cf, name='recommend-properties3'),
+    path(
+        'cosine-similarity-recommendations/',
+        cosine_similarity_recommendations,
+        name='cosine-similarity-recommendations/',
+    ),
+    path(
+        'content-based-recommendations/',
+        content_based_recommendations,
+        name='content-based-recommendations',
+    ),
+    path(
+        'user-based-cf-recommendations/',
+        user_based_recommend_properties_cf,
+        name='user-based-cf-recommendations',
+    ),
+    path(
+        'item-based-cf-recommendations/',
+        item_based_recommend_properties_cf,
+        name='item-based-cf-recommendations',
+    ),
 ]
