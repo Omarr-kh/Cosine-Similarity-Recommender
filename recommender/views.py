@@ -2,9 +2,12 @@ from rest_framework import status, permissions
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
 
-from .system import get_real_state_recommender
+from .cosine_similarity_recommender import get_real_state_recommender
 from .content_based_filtering import get_content_filtering_recommender
-from .collaborative_filtering import get_collaborative_filtering_recommender
+from .collaborative_filtering import (
+    get_item_based_recommender,
+    get_user_based_recommender,
+)
 
 from django.contrib.auth.models import User
 
@@ -56,9 +59,8 @@ def content_based_recommendations(request):
                 'sqft': prop.sqft,
                 'year_built': prop.year_built,
                 'property_type': prop.property_type,
-                'address': prop.address,
-                'city': prop.city,
-                'country': prop.country,
+                'city': prop.location.city,
+                'country': prop.location.country,
                 'parking_spaces': prop.parking_spaces,
                 'has_garage': prop.has_garage,
                 'has_pool': prop.has_pool,
@@ -78,10 +80,8 @@ def content_based_recommendations(request):
 def user_based_recommend_properties_cf(request):
     try:
         user = request.user
-        recommender = get_collaborative_filtering_recommender()
-        # Choose either user-based or item-based CF
-        similar_properties = recommender.item_based_recommendations(user, top_n=5)
-        # similar_properties = recommender.user_based_recommendations(user, top_n=5)
+        recommender = get_user_based_recommender()
+        similar_properties = recommender.get_recommendations(user, top_n=5)
 
         # Serialize the recommended properties
         recommendations = [
@@ -93,9 +93,8 @@ def user_based_recommend_properties_cf(request):
                 'sqft': prop.sqft,
                 'year_built': prop.year_built,
                 'property_type': prop.property_type,
-                'address': prop.address,
-                'city': prop.city,
-                'country': prop.country,
+                'city': prop.location.city,
+                'country': prop.location.country,
                 'parking_spaces': prop.parking_spaces,
                 'has_garage': prop.has_garage,
                 'has_pool': prop.has_pool,
@@ -115,9 +114,8 @@ def user_based_recommend_properties_cf(request):
 def item_based_recommend_properties_cf(request):
     try:
         user = request.user
-        recommender = get_collaborative_filtering_recommender()
-        similar_properties = recommender.item_based_recommendations(user, top_n=5)
-
+        recommender = get_item_based_recommender()
+        similar_properties = recommender.get_recommendations(user, top_n=5)
         # Serialize the recommended properties
         recommendations = [
             {
@@ -128,9 +126,8 @@ def item_based_recommend_properties_cf(request):
                 'sqft': prop.sqft,
                 'year_built': prop.year_built,
                 'property_type': prop.property_type,
-                'address': prop.address,
-                'city': prop.city,
-                'country': prop.country,
+                'city': prop.location.city,
+                'country': prop.location.country,
                 'parking_spaces': prop.parking_spaces,
                 'has_garage': prop.has_garage,
                 'has_pool': prop.has_pool,
@@ -138,7 +135,6 @@ def item_based_recommend_properties_cf(request):
             }
             for prop in similar_properties
         ]
-
         return Response({'recommendations': recommendations}, status=status.HTTP_200_OK)
     except Exception as e:
         print(f"Error: {e}")
