@@ -14,6 +14,11 @@ class UserInteraction(models.Model):
     timestamp = models.DateTimeField(auto_now_add=True)
 
     class Meta:
+        indexes = [
+            models.Index(fields=["user"]),
+            models.Index(fields=["property"]),
+            models.Index(fields=["interaction_type"]),
+        ]
         unique_together = (
             'user',
             'property',
