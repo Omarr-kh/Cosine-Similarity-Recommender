@@ -1,29 +1,29 @@
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.metrics.pairwise import cosine_similarity
-
 import numpy as np
-
-from real_state.models import RealState, UserInteraction
+from django.db.models import Prefetch
+from real_state.models import RealState, UserInteraction, Feature
+from functools import lru_cache
 
 
 class ContentFiltering:
     def __init__(self):
-        try:
-            self.all_properties = RealState.objects.only(
-                "id",
-                "price",
-                "bedrooms",
-                "bathrooms",
-                "sqft",
-                "year_built",
-                "parking_spaces",
-                "property_type",
-                "has_garage",
-                "has_pool",
-            )
-        except:
-            self.all_properties = []
+        # Fetch all properties with their features in a single query
+        self.all_properties = RealState.objects.only(
+            "id",
+            "price",
+            "bedrooms",
+            "bathrooms",
+            "sqft",
+        ).all()
+        # Check if properties exist
+        if not self.all_properties:
+            raise ValueError("No properties found in the database.")
 
+        # Precompute all feature names for one-hot encoding
+        self.all_feature_names = list(Feature.objects.values_list('name', flat=True))
+
+        # Extract numerical features and scale them
         numerical_features = np.array(
             [
                 [
@@ -31,8 +31,6 @@ class ContentFiltering:
                     prop.bedrooms,
                     prop.bathrooms,
                     prop.sqft,
-                    prop.year_built,
-                    prop.parking_spaces,
                 ]
                 for prop in self.all_properties
             ]
@@ -46,35 +44,34 @@ class ContentFiltering:
         }
 
     def property_to_feature_vector(self, property):
+        # Numerical features
         numerical_features = np.array(
             [
                 property.price,
                 property.bedrooms,
                 property.bathrooms,
                 property.sqft,
-                property.year_built,
-                property.parking_spaces,
             ]
         ).reshape(1, -1)
         numerical_features = self.scaler.transform(numerical_features).flatten()
 
-        property_type = 1 if property.property_type == 'residential' else 0
-        has_garage = 1 if property.has_garage else 0
-        has_pool = 1 if property.has_pool else 0
+        # Combine all features into a single vector
+        return numerical_features
 
-        return np.concatenate(
-            [numerical_features, [property_type, has_garage, has_pool]]
-        )
-
-    def get_similar_properties(self, user, top_n=10):
-        user_interactions = UserInteraction.objects.filter(user=user)
+    @lru_cache(maxsize=128)  # Cache results for frequently accessed users
+    def get_similar_properties(self, user_id, top_n=10):
+        # Fetch user interactions in a single query
+        user_interactions = UserInteraction.objects.filter(
+            user_id=user_id
+        ).select_related('property')
         user_properties = [interaction.property for interaction in user_interactions]
 
         if not user_properties:
             return RealState.objects.none()
 
+        # Compute average feature vector for user's interacted properties
         user_feature_vectors = np.array(
-            [self.property_to_feature_vector(prop) for prop in user_properties]
+            [self.property_vectors[prop.id] for prop in user_properties]
         )
         user_avg_vector = np.mean(user_feature_vectors, axis=0)
 
@@ -86,19 +83,20 @@ class ContentFiltering:
         properties_with_similarity = [
             (prop, similarities[idx])
             for idx, prop in enumerate(self.all_properties)
-            if similarities[idx] >= 0.7
+            if similarities[idx] >= 0.7  # Adjust threshold as needed
         ]
 
+        # Sort by similarity and return top N properties
         properties_with_similarity.sort(key=lambda x: x[1], reverse=True)
         return [prop for prop, _ in properties_with_similarity[:top_n]]
 
 
+# Singleton pattern for the recommender
 content_filtering_recommender = None
 
 
 def get_content_filtering_recommender():
     global content_filtering_recommender
     if content_filtering_recommender is None:
-        # Initialize the recommender here (only when accessed)
         content_filtering_recommender = ContentFiltering()
     return content_filtering_recommender
